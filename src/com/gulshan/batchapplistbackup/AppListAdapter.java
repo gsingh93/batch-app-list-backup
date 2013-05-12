@@ -24,6 +24,10 @@ public class AppListAdapter extends ArrayAdapter<AppInfo> {
 		mPackages = packages;
 	}
 
+	public List<AppInfo> getPackageInfo() {
+		return mPackages;
+	}
+
 	@Override
 	public View getView(final int position, View convertView, ViewGroup parent) {
 		ViewHolder holder;

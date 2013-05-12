@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
+import com.gulshan.batchapplistbackup.AppInfo;
 import com.gulshan.batchapplistbackup.db.DatabaseContract.AppList;
 import com.gulshan.batchapplistbackup.db.DatabaseContract.AppSet;
 import com.gulshan.batchapplistbackup.db.DatabaseContract.Apps;
@@ -62,7 +63,7 @@ public class AppSetOpenHelper extends SQLiteOpenHelper {
 		return getAppsInSet(getSetId(setName));
 	}
 
-	public void saveApplicationSet(String title, List<String> apps, String name)
+	public void saveApplicationSet(String title, List<AppInfo> apps, String name)
 			throws DuplicateSetException {
 		int setId;
 		if (name == null) {
@@ -74,9 +75,13 @@ public class AppSetOpenHelper extends SQLiteOpenHelper {
 		linkAppsToSet(setId, apps);
 	}
 
-	private int setTitle(String title, String name) {
+	private int setTitle(String title, String name)
+			throws DuplicateSetException {
 		int id = getSetId(title);
 		if (!title.equals(name)) {
+			if (getSetId(title) != -1) {
+				throw new DuplicateSetException();
+			}
 			ContentValues values = new ContentValues();
 			values.put(AppSet.COLUMN_NAME_TITLE, title);
 			values.put(AppSet._ID, id);
@@ -98,10 +103,11 @@ public class AppSetOpenHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	private void linkAppsToSet(int setId, List<String> apps) {
+	private void linkAppsToSet(int setId, List<AppInfo> apps) {
 		SQLiteDatabase db = getWritableDatabase();
 		ContentValues values = new ContentValues();
-		for (String app : apps) {
+		for (int i = 0; i < apps.size(); i++) {
+			String app = apps.get(i).getName();
 			Cursor c = db.query(Apps.TABLE_NAME, new String[] { Apps._ID },
 					Apps.COLUMN_NAME_NAME + "=?", new String[] { app }, null,
 					null, null);
@@ -113,10 +119,11 @@ public class AppSetOpenHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	private void insertApps(List<String> apps) {
+	private void insertApps(List<AppInfo> apps) {
 		SQLiteDatabase db = getWritableDatabase();
 		ContentValues values = new ContentValues();
-		for (String app : apps) {
+		for (int i = 0; i < apps.size(); i++) {
+			String app = apps.get(i).getName();
 			values.put(Apps.COLUMN_NAME_NAME, app);
 			db.insertWithOnConflict(Apps.TABLE_NAME, null, values,
 					SQLiteDatabase.CONFLICT_IGNORE);

@@ -9,17 +9,14 @@ import java.util.List;
 import java.util.Set;
 
 import org.holoeverywhere.app.Activity;
-import org.holoeverywhere.widget.CheckBox;
 import org.holoeverywhere.widget.EditText;
 import org.holoeverywhere.widget.ListView;
-import org.holoeverywhere.widget.TextView;
 import org.holoeverywhere.widget.Toast;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.view.View;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.view.Menu;
@@ -34,6 +31,7 @@ public class AppListActivity extends Activity {
 	private ListView mListView;
 	private String mName;
 	private AppSetOpenHelper mDb = new AppSetOpenHelper(this);
+	private AppListAdapter mAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +56,20 @@ public class AppListActivity extends Activity {
 	}
 
 	private void populateAppList() {
+		// Get a list of all of the installed packages
+		List<ApplicationInfo> installedPackages = getPackageManager()
+				.getInstalledApplications(PackageManager.GET_META_DATA);
+
+		// Filter out the ones that aren't launchable
+		List<AppInfo> packages = filterLaunchablePackages(installedPackages);
+
+		mAdapter = new AppListAdapter(this, packages);
+		mListView.setAdapter(mAdapter);
+	}
+
+	private List<AppInfo> filterLaunchablePackages(
+			List<ApplicationInfo> installedPackages) {
+		// Get the names of all of the apps that should be checked
 		Set<String> checkedApps = new HashSet<String>();
 		if (mName != null) {
 			Cursor c = mDb.getAppsInSet(mName);
@@ -67,12 +79,8 @@ public class AppListActivity extends Activity {
 			}
 		}
 
+		// Create a list of launchable applications
 		PackageManager pm = getPackageManager();
-		List<ApplicationInfo> installedPackages = pm
-				.getInstalledApplications(PackageManager.GET_META_DATA);
-
-		// Get launchable packages and sort them
-		// TODO There's a cleaner way to do this
 		List<AppInfo> packages = new ArrayList<AppInfo>();
 		for (ApplicationInfo info : installedPackages) {
 			if (pm.getLaunchIntentForPackage(info.packageName) != null) {
@@ -81,9 +89,11 @@ public class AppListActivity extends Activity {
 						.loadIcon(pm), checkedApps.contains(name)));
 			}
 		}
+
+		// Sort the apps lexicographically
 		Collections.sort(packages, new PackageComparator());
 
-		mListView.setAdapter(new AppListAdapter(this, packages));
+		return packages;
 	}
 
 	private class PackageComparator implements Comparator<AppInfo> {
@@ -143,7 +153,7 @@ public class AppListActivity extends Activity {
 					.show();
 			return false;
 		} else {
-			List<String> apps = getCheckedApps();
+			List<AppInfo> apps = getCheckedApps();
 			try {
 				db.saveApplicationSet(title, apps, mName);
 			} catch (DuplicateSetException e) {
@@ -156,17 +166,14 @@ public class AppListActivity extends Activity {
 		return true;
 	}
 
-	private List<String> getCheckedApps() {
-		List<String> apps = new ArrayList<String>();
-		for (int i = 0; i < mListView.getCount(); i++) {
-			View v = (View) mListView.getAdapter().getView(i, null, null);
-			CheckBox cb = (CheckBox) v.findViewById(R.id.app_checkbox);
-			if (cb.isChecked()) {
-				apps.add(((TextView) v.findViewById(R.id.app_name)).getText()
-						.toString());
+	private List<AppInfo> getCheckedApps() {
+		List<AppInfo> info = mAdapter.getPackageInfo();
+		List<AppInfo> apps = new ArrayList<AppInfo>();
+		for (AppInfo app : info) {
+			if (app.isChecked()) {
+				apps.add(app);
 			}
 		}
-
 		return apps;
 	}
 }
