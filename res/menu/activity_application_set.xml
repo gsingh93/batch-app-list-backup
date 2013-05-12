@@ -1,0 +1,19 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_add_set"
+        android:icon="@drawable/ic_plus_light"
+        android:showAsAction="always"
+        android:title="@string/menu_add_set"/>
+    <item
+        android:id="@+id/menu_import"
+        android:icon="@drawable/ic_import_light"
+        android:showAsAction="always|withText"
+        android:title="@string/menu_import"/>
+    <!-- <item -->
+    <!-- android:id="@+id/menu_settings" -->
+    <!-- android:orderInCategory="100" -->
+    <!-- android:showAsAction="never" -->
+    <!-- android:title="@string/menu_settings"/> -->
+
+</menu>

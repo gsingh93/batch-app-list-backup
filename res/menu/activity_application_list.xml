@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_backup"
+        android:enabled="false"
+        android:showAsAction="always|withText"
+        android:title="@string/menu_backup"/>
+    <item
+        android:id="@+id/menu_restore"
+        android:enabled="false"
+        android:showAsAction="always|withText"
+        android:title="@string/menu_restore"/>
+
+</menu>
