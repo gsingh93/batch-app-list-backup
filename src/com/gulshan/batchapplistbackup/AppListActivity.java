@@ -1,5 +1,8 @@
 package com.gulshan.batchapplistbackup;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +15,10 @@ import org.holoeverywhere.app.Activity;
 import org.holoeverywhere.widget.EditText;
 import org.holoeverywhere.widget.ListView;
 import org.holoeverywhere.widget.Toast;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -126,6 +132,7 @@ public class AppListActivity extends Activity {
 			}
 			break;
 		case R.id.menu_backup:
+			// TODO Check if not saved and prompt to save
 			backup();
 			break;
 		case R.id.menu_restore:
@@ -138,7 +145,45 @@ public class AppListActivity extends Activity {
 	}
 
 	private void backup() {
-		getCheckedApps();
+		JSONObject json = constructJson();
+		writeJsonToFile(json);
+		// TODO Display completed message
+	}
+
+	private void writeJsonToFile(JSONObject json) {
+		try {
+			String title = mTitle.getText().toString();
+			FileOutputStream outStream = openFileOutput(title
+					+ "-app-backup-list.json", Context.MODE_PRIVATE);
+			outStream.write(json.toString().getBytes());
+			outStream.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private JSONObject constructJson() {
+		List<AppInfo> apps = getCheckedApps();
+
+		JSONObject json = new JSONObject();
+		try {
+			JSONObject jsonApps = new JSONObject();
+			JSONObject jsonApp = new JSONObject();
+			for (AppInfo app : apps) {
+				jsonApp.put("name", app.getName());
+				jsonApp.put("packageName", app.getPackageName());
+				jsonApps.put("app", jsonApp);
+			}
+			String title = mTitle.getText().toString();
+			json.put("title", title);
+			json.put("apps", jsonApps);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		return json;
 	}
 
 	private void restore() {
