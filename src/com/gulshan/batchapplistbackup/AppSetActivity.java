@@ -1,14 +1,18 @@
 package com.gulshan.batchapplistbackup;
 
+import org.holoeverywhere.app.AlertDialog;
 import org.holoeverywhere.app.ListActivity;
 import org.holoeverywhere.widget.ListView;
 import org.holoeverywhere.widget.TextView;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemLongClickListener;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -17,26 +21,59 @@ import com.gulshan.batchapplistbackup.db.DatabaseContract;
 
 public class AppSetActivity extends ListActivity {
 
+	private AppSetOpenHelper mDb;
+	private Cursor mCursor;
+
+	private ListView mListView;
+	private SimpleCursorAdapter mAdapter;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_application_set);
 
+		mListView = getListView();
+		mDb = new AppSetOpenHelper(this);
+		mCursor = mDb.getAppSets();
+
+		mListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+			@Override
+			public boolean onItemLongClick(AdapterView<?> adapterView,
+					final View view, int pos, long id) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(
+						AppSetActivity.this);
+				final String[] options = new String[] { "Delete" };
+				builder.setTitle("Options").setItems(options,
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								String option = options[which];
+								if (option.equals("Delete")) {
+									String setName = ((TextView) view
+											.findViewById(android.R.id.text1))
+											.getText().toString();
+									mDb.deleteSet(setName);
+									mCursor.requery();
+									mAdapter.notifyDataSetChanged();
+								}
+							}
+						});
+				builder.create().show();
+				return false;
+			}
+		});
 		// getSupportLoaderManager().initLoader(0, null, this);
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		Cursor c = new AppSetOpenHelper(this).getAppSets();
-		getListView()
-				.setAdapter(
-						new SimpleCursorAdapter(
-								this,
-								android.R.layout.simple_list_item_1,
-								c,
-								new String[] { DatabaseContract.AppSet.COLUMN_NAME_TITLE },
-								new int[] { android.R.id.text1 }, 0));
+		mCursor.requery();
+		mAdapter = new SimpleCursorAdapter(this,
+				android.R.layout.simple_list_item_1, mCursor,
+				new String[] { DatabaseContract.AppSet.COLUMN_NAME_TITLE },
+				new int[] { android.R.id.text1 }, 0);
+		mListView.setAdapter(mAdapter);
 	}
 
 	@Override

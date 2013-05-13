@@ -75,6 +75,7 @@ public class AppSetOpenHelper extends SQLiteOpenHelper {
 		linkAppsToSet(setId, apps);
 	}
 
+	// TODO Not delete old entry
 	private int setTitle(String title, String name)
 			throws DuplicateSetException {
 		int id = getSetId(title);
@@ -140,5 +141,11 @@ public class AppSetOpenHelper extends SQLiteOpenHelper {
 		values.put(AppSet.COLUMN_NAME_TITLE, title);
 		return (int) getWritableDatabase().insert(AppSet.TABLE_NAME, null,
 				values);
+	}
+
+	public void deleteSet(String setName) {
+		SQLiteDatabase db = getWritableDatabase();
+		db.delete(AppSet.TABLE_NAME, AppSet.COLUMN_NAME_TITLE + "=?",
+				new String[] { setName });
 	}
 }
